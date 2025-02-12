@@ -23,11 +23,18 @@ const getWeekDates = (date: Date): Date[] => {
   });
 };
 
-// Helper function to get month days
-const getMonthDates = (date: Date): Date[] => {
+const getMonthDates = (date: Date): (Date | null)[] => {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
   const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  const days = [];
+  const days: (Date | null)[] = [];
+
+  const offset = (start.getDay() + 6) % 7;
+
+  for (let i = 0; i < offset; i++) {
+    days.push(null);
+  }
+
+  // Now push all the actual dates of the month.
   let current = new Date(start);
   while (current <= end) {
     days.push(new Date(current));
@@ -35,6 +42,7 @@ const getMonthDates = (date: Date): Date[] => {
   }
   return days;
 };
+
 export const SavedSchedulePage = () => {
   const {
     id
@@ -164,35 +172,59 @@ export const SavedSchedulePage = () => {
       </div>;
   };
   const renderMonthlyView = () => {
+    // Get the month days with placeholders included.
     const monthDays = getMonthDates(currentDate);
-    
-    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+  
+    return (
+      <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
         <div className="grid grid-cols-7 gap-1">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => <div key={day} className="text-[#E0B0FF] text-sm text-center p-2">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+            <div key={day} className="text-[#E0B0FF] text-sm text-center p-2">
               {day}
-            </div>)}
+            </div>
+          ))}
           {monthDays.map((date, i) => {
-          const dateStr = date.toISOString().split("T")[0];
-          const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
-          
-          return <div key={i} className={`
+            // If there is no date, render an empty cell.
+            if (!date) {
+              return <div key={i} className="min-h-[100px] p-2" />;
+            }
+  
+            const dateStr = date.toISOString().split("T")[0];
+            const tasks = schedule?.scheduleData.filter(
+              (item) => item.date === dateStr
+            ) || [];
+  
+            return (
+              <div
+                key={i}
+                className={`
                   min-h-[100px] p-2 rounded-lg
                   ${getTaskColor(date, tasks[0]?.completed)}
                   transition-all duration-300 hover:bg-white/15
-                `}>
+                `}
+              >
                 <div className="text-white font-medium mb-1">
                   {date.getDate()}
                 </div>
                 <div className="space-y-1">
-                  {tasks.map((task, j) => <div key={j} className="text-[#E0B0FF] text-xs truncate" title={task.subject}>
+                  {tasks.map((task, j) => (
+                    <div
+                      key={j}
+                      className="text-[#E0B0FF] text-xs truncate"
+                      title={task.subject}
+                    >
                       • {task.subject}
-                    </div>)}
+                    </div>
+                  ))}
                 </div>
-              </div>;
-        })}
+              </div>
+            );
+          })}
         </div>
-      </div>;
+      </div>
+    );
   };
+  
   const getTaskColor = (date: Date, completed?: boolean) => {
     const status = getTaskStatus(date.toISOString().split("T")[0], completed);
     switch (status) {
