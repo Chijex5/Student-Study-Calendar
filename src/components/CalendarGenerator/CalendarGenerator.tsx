@@ -49,7 +49,7 @@ export const CalendarGenerator = () => {
     if (currentStep === 1 && subjects.length >= 3) {
       setCurrentStep(2);
     } else if (currentStep === 2 && handleDateValidation()) {
-      const generated = generateSchedule(subjects, startDate, endDate);
+      const generated = generateSchedule(subjects, startDate, endDate, false);
       setScheduleData(generated);
       setCurrentStep(3);
     }
@@ -65,7 +65,7 @@ export const CalendarGenerator = () => {
     navigate("/");
   };
   const handleRegenerate = () => {
-    const generated = generateSchedule(subjects, startDate, endDate);
+    const generated = generateSchedule(subjects, startDate, endDate, false);
     setScheduleData(generated);
   };
   return <main className="min-h-screen w-full bg-[#2D0A54] px-4 py-8 md:px-8">
@@ -107,6 +107,6 @@ export const CalendarGenerator = () => {
             </button>}
         </div>
       </div>
-      {showToast && <Toast message="⚠️ This subject already exists!" onClose={() => setShowToast(false)} />}
+      {showToast && <Toast message="This subject already exists!" onClose={() => setShowToast(false)} />}
     </main>;
 };

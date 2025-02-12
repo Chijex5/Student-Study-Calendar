@@ -9,6 +9,7 @@ export const HomePage = () => {
   useEffect(() => {
     setSavedSchedules(getSavedSchedules());
   }, []);
+  console.log(savedSchedules);
   return <main className="min-h-screen w-full bg-gradient-to-b from-[#2D0A54] to-[#6A1B9A] px-4 py-8 md:px-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16 pt-16">
@@ -25,7 +26,7 @@ export const HomePage = () => {
         {savedSchedules.length > 0 && <div className="mt-16">
             <h2 className="text-white text-2xl mb-6">Your Saved Schedules</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedSchedules.map(schedule => <ScheduleCard key={schedule.id} name={schedule.name} date={new Date(schedule.createdAt).toLocaleDateString()} progress={Math.round(schedule.scheduleData.filter(item => new Date(item.date) < new Date()).length / schedule.scheduleData.length * 100)} />)}
+              {savedSchedules.map(schedule => <ScheduleCard key={schedule.id} schedule={schedule} />)}
             </div>
           </div>}
       </div>

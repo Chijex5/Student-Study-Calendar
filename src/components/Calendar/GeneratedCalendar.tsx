@@ -33,10 +33,12 @@ export const GeneratedCalendar = ({
     const dateStr = date.toISOString().split("T")[0];
     return scheduleData.find(item => item.date === dateStr);
   };
-  const isToday = (date: Date) => {
+  const isToday = (date: Date | null): boolean => {
+    if (!date) return false;
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
+  
   return <div>
       <h2 className="text-2xl text-white font-bold mb-6">
         Preview Your Schedule
