@@ -1,17 +1,21 @@
-import React from "react";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
 interface TaskCardProps {
   subject: string;
   date: string;
   status: "completed" | "missed" | "upcoming" | "today";
   onComplete?: () => void;
+  complete?: () => void ;
 }
 export const TaskCard = ({
   subject,
-  date,
   status,
+  complete,
   onComplete
 }: TaskCardProps) => {
+  console.log(!status );
+
+  
+  
   const getStatusDisplay = () => {
     switch (status) {
       case "completed":
@@ -59,7 +63,7 @@ export const TaskCard = ({
         </div>
         <span className="text-[#E0B0FF] text-sm">{text}</span>
       </div>
-      {status === "today" && !onComplete && <button onClick={onComplete} className="mt-4 w-full py-2 bg-[#E040FB] text-white rounded-lg
+      {status === "today" && !onComplete && <button onClick={complete} className="mt-4 w-full py-2 bg-[#E040FB] text-white rounded-lg
             hover:bg-[#E040FB]/80 transition-all duration-300">
           Mark as Complete
         </button>}

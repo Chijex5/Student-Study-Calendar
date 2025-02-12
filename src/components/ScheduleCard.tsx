@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SavedSchedule } from "../utils/scheduleStorage";
+import { Trash2 } from "lucide-react";
 interface ScheduleCardProps {
   schedule: SavedSchedule;
   progress?: number;
+  remove: (id: string) => void;
 }
 const calculateProgress = (startDate: string, endDate: string): number => {
   const start = new Date(startDate).getTime();
@@ -17,7 +19,8 @@ const calculateProgress = (startDate: string, endDate: string): number => {
 };
 export const ScheduleCard: React.FC<ScheduleCardProps> = ({
   schedule,
-  progress
+  progress,
+  remove
 }) => {
   const navigate = useNavigate();
   const [ripplePos, setRipplePos] = useState<{
@@ -72,9 +75,16 @@ export const ScheduleCard: React.FC<ScheduleCardProps> = ({
         </p>
 
       </div>
+      <div className="flex justify-between">
       <button className="text-white relative inline-block group">
         View Schedule
         <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#26A69A] transition-all duration-300 group-hover:w-full" />
       </button>
+      <Trash2 className="text-[#FF6B6B] cursor-pointer" 
+      onClick={(e) => {
+        e.stopPropagation();
+        remove(schedule.id);
+      }} />
+      </div>
     </div>;
 };

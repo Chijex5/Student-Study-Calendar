@@ -1,4 +1,4 @@
-import React from "react";
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { Calendar, Home, Plus } from "lucide-react";
 export const Navbar = () => {
@@ -22,7 +22,7 @@ export const Navbar = () => {
             <button onClick={() => navigate("/create")} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all
                 ${location.pathname === "/create" ? "text-white bg-white/10" : "text-[#E0B0FF] hover:text-white"}`}>
               <Plus size={20} />
-              <span>New Schedule</span>
+              <span className="hidden sm:block">New Schedule</span>
             </button>
           </div>
         </div>

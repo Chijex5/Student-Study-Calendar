@@ -57,6 +57,17 @@ export const updateTaskCompletion = (scheduleId: string, date: string, completed
   localStorage.setItem('schedules', JSON.stringify(schedules));
   return schedule;
 };
+export const removeScheduleById = (scheduleId: string): SavedSchedule[] => {
+
+  const schedules = getSavedSchedules();
+  
+  const updatedSchedules = schedules.filter(schedule => schedule.id !== scheduleId);
+
+  localStorage.setItem('schedules', JSON.stringify(updatedSchedules));
+
+  return updatedSchedules;
+};
+
 export const getTaskStatus = (date: string, completed?: boolean) => {
   const today = new Date();
   const taskDate = new Date(date);

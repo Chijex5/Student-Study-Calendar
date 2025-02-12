@@ -14,6 +14,7 @@ export const CalendarGenerator = () => {
   const [showToast, setShowToast] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [startDate, setStartDate] = useState("");
+  const [name, setName] = useState("");
   const [endDate, setEndDate] = useState("");
   const [dateError, setDateError] = useState("");
   const [scheduleData, setScheduleData] = useState<{
@@ -56,7 +57,7 @@ export const CalendarGenerator = () => {
   };
   const handleSave = () => {
     const schedule = saveSchedule({
-      name: `Study Schedule ${new Date().toLocaleDateString()}`,
+      name,
       subjects,
       startDate,
       endDate,
@@ -95,7 +96,7 @@ export const CalendarGenerator = () => {
             }} />)}
               </div>
             </>}
-          {currentStep === 2 && <DateSelection startDate={startDate} endDate={endDate} onStartDateChange={setStartDate} onEndDateChange={setEndDate} error={dateError} />}
+          {currentStep === 2 && <DateSelection startDate={startDate} endDate={endDate} name={name} onStartDateChange={setStartDate} onEndDateChange={setEndDate} onNameChange={setName} error={dateError} />}
           {currentStep === 3 && <GeneratedCalendar scheduleData={scheduleData} onSave={handleSave} onRegenerate={handleRegenerate} />}
           {currentStep < 3 && <button onClick={handleNextStep} disabled={currentStep === 1 ? subjects.length < 3 : false} className={`
                 w-full py-3 px-6 rounded-lg

@@ -1,12 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { TodayTaskCard } from "./TodayTaskCard";
 import { LiquidProgressBar } from "./LiquidProgressBar";
 import { ViewToggle } from "./ViewToggle";
 import { getSavedSchedules, SavedSchedule } from "../../utils/scheduleStorage";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar1 } from "lucide-react";
 import { TaskCard } from "./TaskCard";
+import Confetti from "react-confetti";
+import { ReportComponent } from "./ReportComponent";
 import { updateTaskCompletion, getTaskStatus } from "../../utils/scheduleStorage";
+
+// Define the ViewType type
+type ViewType = "daily" | "weekly" | "monthly";
 
 // Helper function to get week days
 const getWeekDates = (date: Date): Date[] => {
@@ -40,6 +44,8 @@ export const SavedSchedulePage = () => {
   const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>("daily");
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showOverlay, setShowOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     const schedules = getSavedSchedules();
@@ -54,9 +60,7 @@ export const SavedSchedulePage = () => {
     setCurrentView(view);
     setCurrentDate(new Date()); // Reset to current date when changing views
   };
-  const CurrentMonth = currentDate.toLocaleDateString("en-US", {
-    month: "long"
-  });
+  
   const handleDateNavigation = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
     const modifier = direction === "prev" ? -1 : 1;
@@ -73,6 +77,21 @@ export const SavedSchedulePage = () => {
     }
     setCurrentDate(newDate);
   };
+  const complete = (id: string, complete: boolean, date: string) => {
+    const updated = updateTaskCompletion(id, date, complete);
+          if (updated) {
+            setSchedule(updated);
+            // Update progress
+            const completed = updated.scheduleData.filter(item => item.completed).length;
+            setShowConfetti(true);
+            setShowOverlay(true);
+            setTimeout(() => {
+              setShowConfetti(false);
+              setShowOverlay(false);
+            }, 3000);
+            setProgress(Math.round(completed / updated.scheduleData.length * 100));
+          }
+  }
   const renderDailyView = () => {
     const dateStr = currentDate.toISOString().split("T")[0];
     const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
@@ -91,15 +110,24 @@ export const SavedSchedulePage = () => {
             </span>}
         </div>
         <div className="space-y-4">
-          {tasks.map((task, i) => <TaskCard key={i} subject={task.subject} date={task.date} status={getTaskStatus(task.date, task.completed)} onComplete={isToday && !task.completed ? () => {
-          const updated = updateTaskCompletion(schedule!.id, task.date, true);
-          if (updated) {
-            setSchedule(updated);
-            // Update progress
-            const completed = updated.scheduleData.filter(item => item.completed).length;
-            setProgress(Math.round(completed / updated.scheduleData.length * 100));
-          }
-        } : undefined} />)}
+        {tasks.length === 0 ? (
+          // Gracefully show a message when there are no tasks for the day.
+          <div className="text-center text-white font-medium flex items-center gap-2 px-4 py-2">
+            
+            <Calendar1 />
+            <span>No tasks scheduled for this day.</span>
+          </div>
+        ) : (
+          tasks.map((task, i) => 
+          <TaskCard
+            key={i}
+            subject={task.subject}
+            date={task.date}
+            status={getTaskStatus(task.date, task.completed)}
+            complete={schedule?.id ? () => complete(schedule.id!, true, task.date) : undefined}
+            onComplete={isToday && task.completed ? () => {} : undefined}
+          />
+        ))}
         </div>
       </div>;
   };
@@ -137,7 +165,7 @@ export const SavedSchedulePage = () => {
   };
   const renderMonthlyView = () => {
     const monthDays = getMonthDates(currentDate);
-    const today = new Date();
+    
     return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
         <div className="grid grid-cols-7 gap-1">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => <div key={day} className="text-[#E0B0FF] text-sm text-center p-2">
@@ -146,7 +174,7 @@ export const SavedSchedulePage = () => {
           {monthDays.map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];
           const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
-          const isToday = date.toDateString() === today.toDateString();
+          
           return <div key={i} className={`
                   min-h-[100px] p-2 rounded-lg
                   ${getTaskColor(date, tasks[0]?.completed)}
@@ -181,6 +209,11 @@ export const SavedSchedulePage = () => {
   if (!schedule) return null;
   return <main className="min-h-screen w-full bg-[#2D0A54] px-4 py-8 md:px-8">
       <div className="max-w-6xl mx-auto">
+        {showOverlay && <div className="absolute inset-0 flex items-center z-100 justify-center animate-fade-in">
+            <p className="text-white text-2xl font-bold">🎉 Amazing! One step closer!</p>
+          </div>}
+        {showConfetti && <Confetti colors={["#E040FB", "#26A69A", "#FFFFFF"]} recycle={false} numberOfPieces={200} />}
+
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-white text-3xl font-bold">{schedule.name}</h1>
           <ViewToggle currentView={currentView} onViewChange={handleViewChange} />
@@ -208,7 +241,11 @@ export const SavedSchedulePage = () => {
             </h2>
             <LiquidProgressBar progress={progress} />
           </div>
+          <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+          <ReportComponent scheduleData={schedule.scheduleData} />
         </div>
+        </div>
+        
       </div>
     </main>;
 };
