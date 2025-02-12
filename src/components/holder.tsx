@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { CTAButton } from "./CTAButton";
 import { ScheduleCard } from "./ScheduleCard";
 import { useNavigate } from "react-router-dom";
-import MainBackgroundWithRipple from "./HomeMain"
 import { getSavedSchedules, SavedSchedule, removeScheduleById } from "../utils/scheduleStorage";
 export const HomePage = () => {
   const navigate = useNavigate();
+  const [ripplePos, setRipplePos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setRipplePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
   const [savedSchedules, setSavedSchedules] = useState<SavedSchedule[]>([]);
   useEffect(() => {
     setSavedSchedules(getSavedSchedules());
@@ -14,8 +25,17 @@ export const HomePage = () => {
     const newSchedules = removeScheduleById(id);
     setSavedSchedules(newSchedules);
   }
-  return <MainBackgroundWithRipple>
-  <main className="min-h-screen w-full bg-gradient-to-b from-[#2D0A54] to-[#6A1B9A] px-4 py-8 md:px-8">
+  return <main className="min-h-screen w-full bg-gradient-to-b from-[#2D0A54] to-[#6A1B9A] px-4 py-8 md:px-8" onMouseMove={handleMouseMove} onMouseLeave={() => setRipplePos(null)}>
+    {ripplePos && <div className="absolute pointer-events-none" style={{
+      left: ripplePos.x,
+      top: ripplePos.y,
+      transform: "translate(-50%, -50%)",
+      width: "200px",
+      height: "200px",
+      background: "radial-gradient(circle, rgba(224,64,251,0.2) 0%, transparent 70%)",
+      borderRadius: "50%",
+      transition: "all 0.5s ease-out"
+    }} />}
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16 pt-16">
           <h1 className="text-[48px] font-bold text-white mb-4 leading-tight">
@@ -35,6 +55,5 @@ export const HomePage = () => {
             </div>
           </div>}
       </div>
-    </main>
-    </MainBackgroundWithRipple>;
+    </main>;
 };
