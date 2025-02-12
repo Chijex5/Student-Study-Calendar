@@ -45,3 +45,26 @@ export const generateSchedule = (subjects: string[], startDate: string, endDate:
   }
   return scheduleData;
 };
+export const updateTaskCompletion = (scheduleId: string, date: string, completed: boolean) => {
+  const schedules = getSavedSchedules();
+  const scheduleIndex = schedules.findIndex(s => s.id === scheduleId);
+  if (scheduleIndex === -1) return null;
+  const schedule = schedules[scheduleIndex];
+  const taskIndex = schedule.scheduleData.findIndex(task => task.date === date);
+  if (taskIndex === -1) return null;
+  schedule.scheduleData[taskIndex].completed = completed;
+  schedules[scheduleIndex] = schedule;
+  localStorage.setItem('schedules', JSON.stringify(schedules));
+  return schedule;
+};
+export const getTaskStatus = (date: string, completed?: boolean) => {
+  const today = new Date();
+  const taskDate = new Date(date);
+  today.setHours(0, 0, 0, 0);
+  taskDate.setHours(0, 0, 0, 0);
+  if (taskDate > today) return 'upcoming';
+  if (taskDate < today && !completed) return 'missed';
+  if (completed) return 'completed';
+  if (taskDate.getTime() === today.getTime()) return 'today';
+  return 'missed';
+};

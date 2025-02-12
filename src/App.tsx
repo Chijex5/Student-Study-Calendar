@@ -3,12 +3,16 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { HomePage } from "./components/HomePage";
 import { CalendarGenerator } from "./components/CalendarGenerator/CalendarGenerator";
 import { SavedSchedulePage } from "./components/SavedSchedule/SavedSchedulePage";
+import { Navbar } from "./components/Navigation/Navbar";
 export function App() {
   return <Router>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CalendarGenerator />} />
-        <Route path="/schedule/:id" element={<SavedSchedulePage />} />
-      </Routes>
+      <Navbar />
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/create" element={<CalendarGenerator />} />
+          <Route path="/schedule/:id" element={<SavedSchedulePage />} />
+        </Routes>
+      </div>
     </Router>;
 }

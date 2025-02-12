@@ -38,7 +38,6 @@ export const GeneratedCalendar = ({
     const today = new Date();
     return date.toDateString() === today.toDateString();
   };
-  
   return <div>
       <h2 className="text-2xl text-white font-bold mb-6">
         Preview Your Schedule

@@ -5,8 +5,8 @@ import { LiquidProgressBar } from "./LiquidProgressBar";
 import { ViewToggle } from "./ViewToggle";
 import { getSavedSchedules, SavedSchedule } from "../../utils/scheduleStorage";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-type ViewType = "daily" | "weekly" | "monthly";
+import { TaskCard } from "./TaskCard";
+import { updateTaskCompletion, getTaskStatus } from "../../utils/scheduleStorage";
 
 // Helper function to get week days
 const getWeekDates = (date: Date): Date[] => {
@@ -31,14 +31,16 @@ const getMonthDates = (date: Date): Date[] => {
   }
   return days;
 };
-
 export const SavedSchedulePage = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const [schedule, setSchedule] = useState<SavedSchedule | null>(null);
   const [currentView, setCurrentView] = useState<ViewType>("daily");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [progress, setProgress] = useState(0);
-
   useEffect(() => {
     const schedules = getSavedSchedules();
     const found = schedules.find(s => s.id === id);
@@ -48,24 +50,22 @@ export const SavedSchedulePage = () => {
       setProgress(Math.round(completed / found.scheduleData.length * 100));
     }
   }, [id]);
-
   const handleViewChange = (view: ViewType) => {
     setCurrentView(view);
     setCurrentDate(new Date()); // Reset to current date when changing views
   };
-
-  const CurrentMonth = currentDate.toLocaleDateString('en-US', { month: 'long' });
-  
+  const CurrentMonth = currentDate.toLocaleDateString("en-US", {
+    month: "long"
+  });
   const handleDateNavigation = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
     const modifier = direction === "prev" ? -1 : 1;
-    
-    switch(currentView) {
+    switch (currentView) {
       case "daily":
         newDate.setDate(newDate.getDate() + modifier);
         break;
       case "weekly":
-        newDate.setDate(newDate.getDate() + (modifier * 7));
+        newDate.setDate(newDate.getDate() + modifier * 7);
         break;
       case "monthly":
         newDate.setMonth(newDate.getMonth() + modifier);
@@ -73,151 +73,142 @@ export const SavedSchedulePage = () => {
     }
     setCurrentDate(newDate);
   };
-
   const renderDailyView = () => {
     const dateStr = currentDate.toISOString().split("T")[0];
     const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
     const isToday = currentDate.toDateString() === new Date().toDateString();
-
-    return (
-      <div className="mt-8">
-        <div className="flex items-center justify-between mb-4">
+    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+        <div className="flex items-center justify-between mb-6">
           <h2 className="text-white text-xl font-bold">
-            {currentDate.toLocaleDateString()}
+            {currentDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric"
+          })}
           </h2>
-          {isToday && <span className="bg-green-500 text-white px-2 py-1 rounded">Today</span>}
+          {isToday && <span className="bg-[#E040FB] px-3 py-1 rounded-full text-sm text-white">
+              Today
+            </span>}
         </div>
-        
-        {tasks.map((task, i) => (
-          <TodayTaskCard 
-            key={i}
-            subject={task.subject}
-            isToday={isToday}
-            onComplete={() => setProgress(prev => Math.min(prev + 5, 100))}
-          />
-        ))}
-      </div>
-    );
+        <div className="space-y-4">
+          {tasks.map((task, i) => <TaskCard key={i} subject={task.subject} date={task.date} status={getTaskStatus(task.date, task.completed)} onComplete={isToday && !task.completed ? () => {
+          const updated = updateTaskCompletion(schedule!.id, task.date, true);
+          if (updated) {
+            setSchedule(updated);
+            // Update progress
+            const completed = updated.scheduleData.filter(item => item.completed).length;
+            setProgress(Math.round(completed / updated.scheduleData.length * 100));
+          }
+        } : undefined} />)}
+        </div>
+      </div>;
   };
-
   const renderWeeklyView = () => {
     const weekDays = getWeekDates(currentDate);
     const today = new Date();
-
-    return (
-      <div className="mt-8">
-        <h2 className="text-white text-xl font-bold mb-4">
-          Week of {weekDays[0].toLocaleDateString()} - {weekDays[6].toLocaleDateString()}
-        </h2>
-        <div className="grid grid-cols-7 gap-2">
+    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+        <div className="grid grid-cols-7 gap-4">
           {weekDays.map((date, i) => {
-            const dateStr = date.toISOString().split("T")[0];
-            const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
-            const isToday = date.toDateString() === today.toDateString();
-
-            return (
-              <div key={i} className={`p-2 rounded ${isToday ? 'bg-purple-500/20' : 'bg-white/5'}`}>
-                <div className="text-white text-sm mb-1">
-                  {date.toLocaleDateString('en-US', { weekday: 'short' })}
+          const dateStr = date.toISOString().split("T")[0];
+          const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
+          const isToday = date.toDateString() === today.toDateString();
+          return <div key={i} className={`
+                  rounded-lg p-3 
+                  ${isToday ? "bg-[#E040FB]/20" : "bg-white/10"}
+                  transition-all duration-300 hover:bg-white/15
+                `}>
+                <div className="text-center mb-2">
+                  <div className="text-[#E0B0FF] text-sm">
+                    {date.toLocaleDateString("en-US", {
+                  weekday: "short"
+                })}
+                  </div>
+                  <div className="text-white font-bold">{date.getDate()}</div>
                 </div>
-                <div className="text-[#E0B0FF] text-xs">
-                  {tasks.map((task, j) => (
-                    <div key={j} className="truncate">{task.subject}</div>
-                  ))}
+                <div className="space-y-2">
+                  {tasks.map((task, j) => <div key={j} className="text-white text-sm p-1 rounded bg-white/5">
+                      {task.subject}
+                    </div>)}
                 </div>
-              </div>
-            );
-          })}
+              </div>;
+        })}
         </div>
-      </div>
-    );
+      </div>;
   };
-
   const renderMonthlyView = () => {
     const monthDays = getMonthDates(currentDate);
     const today = new Date();
-
-    return (
-      <div className="mt-8">
-        <h2 className="text-white text-xl font-bold mb-4">
-          {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-        </h2>
+    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
         <div className="grid grid-cols-7 gap-1">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => <div key={day} className="text-[#E0B0FF] text-sm text-center p-2">
+              {day}
+            </div>)}
           {monthDays.map((date, i) => {
-            const dateStr = date.toISOString().split("T")[0];
-            const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
-            const isToday = date.toDateString() === today.toDateString();
-
-            return (
-              <div 
-                key={i} 
-                className={`min-h-[80px] p-1 text-sm ${isToday ? 'bg-purple-500/30' : 'bg-white/5'}`}
-              >
-                <div className="text-white">{date.getDate()}</div>
-                <div className="text-[#E0B0FF] text-xs">
-                  {tasks.map((task, j) => (
-                    <div key={j} className="truncate">{task.subject}</div>
-                  ))}
+          const dateStr = date.toISOString().split("T")[0];
+          const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
+          const isToday = date.toDateString() === today.toDateString();
+          return <div key={i} className={`
+                  min-h-[100px] p-2 rounded-lg
+                  ${getTaskColor(date, tasks[0]?.completed)}
+                  transition-all duration-300 hover:bg-white/15
+                `}>
+                <div className="text-white font-medium mb-1">
+                  {date.getDate()}
                 </div>
-              </div>
-            );
-          })}
+                <div className="space-y-1">
+                  {tasks.map((task, j) => <div key={j} className="text-[#E0B0FF] text-xs truncate" title={task.subject}>
+                      • {task.subject}
+                    </div>)}
+                </div>
+              </div>;
+        })}
         </div>
-      </div>
-    );
+      </div>;
   };
-
+  const getTaskColor = (date: Date, completed?: boolean) => {
+    const status = getTaskStatus(date.toISOString().split("T")[0], completed);
+    switch (status) {
+      case "completed":
+        return "bg-[#26A69A]/10";
+      case "missed":
+        return "bg-[#FF6B6B]/10";
+      case "today":
+        return "bg-[#E040FB]/20";
+      default:
+        return "bg-white/10";
+    }
+  };
   if (!schedule) return null;
-
-  return (
-    <main className="min-h-screen w-full bg-[#2D0A54] px-4 py-8 md:px-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+  return <main className="min-h-screen w-full bg-[#2D0A54] px-4 py-8 md:px-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-white text-3xl font-bold">{schedule.name}</h1>
           <ViewToggle currentView={currentView} onViewChange={handleViewChange} />
         </div>
-
-        <div className="flex items-center gap-4 mb-8">
-          <button 
-            onClick={() => handleDateNavigation("prev")}
-            className="text-white hover:text-[#E040FB] transition-colors"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <button 
-            onClick={() => setCurrentDate(new Date())}
-            className="text-white hover:text-[#E040FB] transition-colors"
-          >
-            {`${currentView === "daily"? "Today" : currentView === "weekly"? "This Week" : currentView === "monthly"? "This Month" : " "}`}
-          </button>
-          <button 
-            onClick={() => handleDateNavigation("next")}
-            className="text-white hover:text-[#E040FB] transition-colors"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
-
-        <div className="grid gap-8 md:grid-cols-2">
-          {currentView === "daily" && renderDailyView()}
-          {currentView === "weekly" && renderWeeklyView()}
-          {currentView === "monthly" && renderMonthlyView()}
-          
+        <div className="grid md:grid-cols-[2fr_1fr] gap-8">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between bg-white/5 backdrop-blur-md rounded-xl p-4">
+              <button onClick={() => handleDateNavigation("prev")} className="text-white hover:text-[#E040FB] transition-colors">
+                <ChevronLeft size={24} />
+              </button>
+              <button onClick={() => setCurrentDate(new Date())} className="text-white hover:text-[#E040FB] transition-colors text-lg font-medium">
+                {currentView === "daily" ? "Today" : currentView === "weekly" ? "This Week" : "This Month"}
+              </button>
+              <button onClick={() => handleDateNavigation("next")} className="text-white hover:text-[#E040FB] transition-colors">
+                <ChevronRight size={24} />
+              </button>
+            </div>
+            {currentView === "daily" && renderDailyView()}
+            {currentView === "weekly" && renderWeeklyView()}
+            {currentView === "monthly" && renderMonthlyView()}
+          </div>
           <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
-            <h2 className="text-[#E040FB] text-xl font-bold mb-4">
+            <h2 className="text-[#E040FB] text-xl font-bold mb-6">
               Overall Progress
-            </h2><LiquidProgressBar 
-              progress={75}
-              width={100}
-              height={200}
-              gradientFrom="#3f51b5"
-              gradientTo="#2196f3"
-              rippleColor="#2196f3"
-              className="my-4"
-            /><LiquidProgressBar progress={progress} />
+            </h2>
+            <LiquidProgressBar progress={progress} />
           </div>
         </div>
       </div>
-    </main>
-  );
+    </main>;
 };
