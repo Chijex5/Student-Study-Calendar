@@ -17,7 +17,7 @@ export const Navbar = () => {
             <button onClick={() => navigate("/")} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all
                 ${location.pathname === "/" ? "text-white bg-white/10" : "text-[#E0B0FF] hover:text-white"}`}>
               <Home size={20} />
-              <span>Home</span>
+              <span className="hidden sm:block">Home</span>
             </button>
             <button onClick={() => navigate("/create")} className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all
                 ${location.pathname === "/create" ? "text-white bg-white/10" : "text-[#E0B0FF] hover:text-white"}`}>
