@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Component } from "react";
 import { useParams } from "react-router-dom";
 import { LiquidProgressBar } from "./LiquidProgressBar";
 import { ViewToggle } from "./ViewToggle";
 import { getSavedSchedules, SavedSchedule } from "../../utils/scheduleStorage";
-import { ChevronLeft, ChevronRight, Calendar1 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import Confetti from "react-confetti";
 import { ReportComponent } from "./ReportComponent";
 import { updateTaskCompletion, getTaskStatus } from "../../utils/scheduleStorage";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, Trophy, Sparkles, PartyPopper, Award } from "lucide-react";
 
 // Define the ViewType type
 type ViewType = "daily" | "weekly" | "monthly";
@@ -22,14 +24,11 @@ const getWeekDates = (date: Date): Date[] => {
     return day;
   });
 };
-
 const getMonthDates = (date: Date): (Date | null)[] => {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
   const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const days: (Date | null)[] = [];
-
   const offset = (start.getDay() + 6) % 7;
-
   for (let i = 0; i < offset; i++) {
     days.push(null);
   }
@@ -42,7 +41,6 @@ const getMonthDates = (date: Date): (Date | null)[] => {
   }
   return days;
 };
-
 export const SavedSchedulePage = () => {
   const {
     id
@@ -55,6 +53,8 @@ export const SavedSchedulePage = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [celebrationType, setCelebrationType] = useState<"confetti" | "achievement" | null>(null);
+  const [showAchievement, setShowAchievement] = useState(false);
   useEffect(() => {
     const schedules = getSavedSchedules();
     const found = schedules.find(s => s.id === id);
@@ -68,7 +68,6 @@ export const SavedSchedulePage = () => {
     setCurrentView(view);
     setCurrentDate(new Date()); // Reset to current date when changing views
   };
-  
   const handleDateNavigation = (direction: "prev" | "next") => {
     const newDate = new Date(currentDate);
     const modifier = direction === "prev" ? -1 : 1;
@@ -87,84 +86,208 @@ export const SavedSchedulePage = () => {
   };
   const complete = (id: string, complete: boolean, date: string) => {
     const updated = updateTaskCompletion(id, date, complete);
-          if (updated) {
-            setSchedule(updated);
-            // Update progress
-            const completed = updated.scheduleData.filter(item => item.completed).length;
-            setShowConfetti(true);
-            setShowOverlay(true);
-            setTimeout(() => {
-              setShowConfetti(false);
-              setShowOverlay(false);
-            }, 3000);
-            setProgress(Math.round(completed / updated.scheduleData.length * 100));
-          }
-  }
+    if (updated) {
+      setSchedule(updated);
+      const completed = updated.scheduleData.filter(item => item.completed).length;
+      setCelebrationType("confetti");
+      setShowOverlay(true);
+      setShowAchievement(true);
+      setTimeout(() => {
+        setCelebrationType("achievement");
+      }, 2000);
+      setTimeout(() => {
+        setShowOverlay(false);
+        setCelebrationType(null);
+        setShowAchievement(false);
+      }, 4000);
+      setProgress(Math.round(completed / updated.scheduleData.length * 100));
+    }
+  };
+  const renderCelebration = () => {
+    if (!celebrationType) return null;
+    return <>
+        {celebrationType === "confetti" && <Confetti width={window.innerWidth} height={window.innerHeight} numberOfPieces={200} recycle={false} colors={["#E040FB", "#26A69A", "#FFFFFF", "#FF4081", "#7C4DFF"]} gravity={0.3} tweenDuration={4000} />}
+        <AnimatePresence>
+          {showAchievement && <motion.div initial={{
+          scale: 0,
+          y: 50
+        }} animate={{
+          scale: 1,
+          y: 0
+        }} exit={{
+          scale: 0,
+          y: -50
+        }} className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+              <motion.div className="bg-white/10 backdrop-blur-xl rounded-xl p-8 text-center" initial={{
+            opacity: 0
+          }} animate={{
+            opacity: 1
+          }} exit={{
+            opacity: 0
+          }}>
+                <motion.div className="mb-4" animate={{
+              scale: [1, 1.2, 1],
+              rotate: [0, 10, -10, 0]
+            }} transition={{
+              duration: 0.5,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}>
+                  <div className="relative inline-block">
+                    <div className="absolute inset-0 animate-ping">
+                      <Trophy className="w-16 h-16 text-[#E040FB]" />
+                    </div>
+                    <Trophy className="w-16 h-16 text-[#E040FB] relative z-10" />
+                  </div>
+                </motion.div>
+                <motion.h2 className="text-2xl font-bold text-white mb-2" initial={{
+              opacity: 0,
+              y: 20
+            }} animate={{
+              opacity: 1,
+              y: 0
+            }} transition={{
+              delay: 0.2
+            }}>
+                  Task Completed!
+                </motion.h2>
+                <motion.p className="text-[#E0B0FF] mb-4" initial={{
+              opacity: 0
+            }} animate={{
+              opacity: 1
+            }} transition={{
+              delay: 0.4
+            }}>
+                  Keep up the amazing work!
+                </motion.p>
+                <motion.div className="flex justify-center gap-2" initial={{
+              opacity: 0
+            }} animate={{
+              opacity: 1
+            }} transition={{
+              delay: 0.6
+            }}>
+                  {[...Array(5)].map((_, i) => <motion.div key={i} initial={{
+                scale: 0
+              }} animate={{
+                scale: 1
+              }} transition={{
+                delay: 0.6 + i * 0.1,
+                type: "spring",
+                stiffness: 300
+              }}>
+                      <Star className="w-6 h-6 text-[#E040FB]" fill="#E040FB" />
+                    </motion.div>)}
+                </motion.div>
+              </motion.div>
+            </motion.div>}
+        </AnimatePresence>
+        <motion.div className="fixed inset-0 pointer-events-none" initial={{
+        opacity: 0
+      }} animate={{
+        opacity: 1
+      }} exit={{
+        opacity: 0
+      }}>
+          {Array.from({
+          length: 3
+        }).map((_, i) => <motion.div key={i} className="absolute" initial={{
+          x: Math.random() * window.innerWidth,
+          y: window.innerHeight
+        }} animate={{
+          y: -100,
+          x: Math.random() * window.innerWidth
+        }} transition={{
+          duration: 2,
+          delay: i * 0.3,
+          repeat: Infinity,
+          repeatType: "loop"
+        }}>
+              <Sparkles className="w-6 h-6 text-[#E040FB]" />
+            </motion.div>)}
+        </motion.div>
+      </>;
+  };
   const renderDailyView = () => {
     const dateStr = currentDate.toISOString().split("T")[0];
     const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
     const isToday = currentDate.toDateString() === new Date().toDateString();
-    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white text-xl font-bold">
-            {currentDate.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric"
-          })}
-          </h2>
-          {isToday && <span className="bg-[#E040FB] px-3 py-1 rounded-full text-sm text-white">
-              Today
-            </span>}
-        </div>
-        <div className="space-y-4">
-        {tasks.length === 0 ? (
-          // Gracefully show a message when there are no tasks for the day.
-          <div className="text-center text-white font-medium flex items-center gap-2 px-4 py-2">
-            
-            <Calendar1 />
-            <span>No tasks scheduled for this day.</span>
+    return <div className="space-y-6">
+        <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-white text-2xl font-bold">
+              {currentDate.toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric"
+            })}
+            </h2>
+            {isToday && <span className="px-4 py-1.5 bg-[#E040FB]/20 text-[#E040FB] rounded-full text-sm font-medium">
+                Today
+              </span>}
           </div>
-        ) : (
-          tasks.map((task, i) => 
-          <TaskCard
-            key={i}
-            subject={task.subject}
-            date={task.date}
-            status={getTaskStatus(task.date, task.completed)}
-            complete={schedule?.id ? () => complete(schedule.id!, true, task.date) : undefined}
-            onComplete={isToday && task.completed ? () => {} : undefined}
-          />
-        ))}
+          {tasks.length === 0 ? <div className="text-center py-12 backdrop-blur-md bg-white/5 rounded-xl border border-white/10">
+              <Calendar className="mx-auto text-[#E0B0FF] mb-4" size={32} />
+              <p className="text-white font-medium">No tasks scheduled</p>
+              <p className="text-[#E0B0FF] text-sm mt-1">
+                Take this time to review or rest
+              </p>
+            </div> : <div className="space-y-4">
+              {tasks.map((task, i) => <TaskCard key={i} subject={task.subject} date={task.date} status={getTaskStatus(task.date, task.completed)} complete={schedule?.id ? () => complete(schedule.id!, true, task.date) : undefined} onComplete={isToday && task.completed ? () => {} : undefined} />)}
+            </div>}
         </div>
+        {renderCelebration()}
       </div>;
   };
   const renderWeeklyView = () => {
     const weekDays = getWeekDates(currentDate);
     const today = new Date();
     return <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
-        <div className="grid grid-cols-7 gap-4">
-          {weekDays.map((date, i) => {
+        <div className="mb-6">
+          <h2 className="text-white text-xl font-bold">
+            Week of{" "}
+            {weekDays[0].toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric"
+          })}
+          </h2>
+        </div>
+        <div className="grid grid-cols-5 gap-4">
+          {weekDays.slice(0, 5).map((date, i) => {
           const dateStr = date.toISOString().split("T")[0];
           const tasks = schedule?.scheduleData.filter(item => item.date === dateStr) || [];
           const isToday = date.toDateString() === today.toDateString();
+          const isPast = date < today;
+          const status = tasks[0]?.completed ? "completed" : isPast ? "missed" : isToday ? "today" : "upcoming";
           return <div key={i} className={`
-                  rounded-lg p-3 
-                  ${isToday ? "bg-[#E040FB]/20" : "bg-white/10"}
-                  transition-all duration-300 hover:bg-white/15
+                  rounded-xl p-4
+                  backdrop-blur-md
+                  ${isToday ? "bg-[#E040FB]/20 ring-2 ring-[#E040FB]" : "bg-white/5"}
+                  transition-all duration-300
+                  hover:bg-white/10
                 `}>
-                <div className="text-center mb-2">
-                  <div className="text-[#E0B0FF] text-sm">
+                <div className="text-center mb-4">
+                  <div className="text-[#E0B0FF] text-sm mb-1">
                     {date.toLocaleDateString("en-US", {
                   weekday: "short"
                 })}
                   </div>
-                  <div className="text-white font-bold">{date.getDate()}</div>
+                  <div className="text-white text-xl font-bold">
+                    {date.getDate()}
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  {tasks.map((task, j) => <div key={j} className="text-white text-sm p-1 rounded bg-white/5">
+                  {tasks.map((task, j) => <div key={j} className={`
+                        p-3 rounded-lg text-sm
+                        ${task.completed ? "bg-[#26A69A]/20 text-[#26A69A]" : isPast ? "bg-[#FF5252]/20 text-[#FF5252]" : "bg-white/10 text-white"}
+                      `}>
                       {task.subject}
                     </div>)}
+                  {tasks.length === 0 && <div className="text-center py-3">
+                      <span className="text-[#E0B0FF]/60 text-sm">
+                        No tasks
+                      </span>
+                    </div>}
                 </div>
               </div>;
         })}
@@ -172,59 +295,57 @@ export const SavedSchedulePage = () => {
       </div>;
   };
   const renderMonthlyView = () => {
-    // Get the month days with placeholders included.
     const monthDays = getMonthDates(currentDate);
-  
-    return (
-      <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
+    const isMobile = window.innerWidth < 768;
+    return <div className="bg-white/5 backdrop-blur-md rounded-xl p-2 md:p-6">
         <div className="grid grid-cols-7 gap-1">
-          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-            <div key={day} className="text-[#E0B0FF] text-sm text-center p-2">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(day => <div key={day} className="hidden md:block text-[#E0B0FF] text-sm text-center p-2">
               {day}
-            </div>
-          ))}
-          {monthDays.map((date, i) => {
-            // If there is no date, render an empty cell.
-            if (!date) {
-              return <div key={i} className="min-h-[100px] p-2" />;
-            }
-  
-            const dateStr = date.toISOString().split("T")[0];
-            const tasks = schedule?.scheduleData.filter(
-              (item) => item.date === dateStr
-            ) || [];
-  
-            return (
-              <div
-                key={i}
-                className={`
-                  min-h-[100px] p-2 rounded-lg
-                  ${getTaskColor(date, tasks[0]?.completed)}
-                  transition-all duration-300 hover:bg-white/15
-                `}
-              >
-                <div className="text-white font-medium mb-1">
+            </div>)}
+          {["M", "T", "W", "T", "F", "S", "S"].map(day => <div key={day} className="md:hidden text-[#E0B0FF] text-xs text-center p-1">
+              {day}
+            </div>)}
+          {monthDays.map((date: Date | null, i: number) => {
+          if (!date) {
+            return <div key={i} className="min-h-[40px] md:min-h-[100px] p-1 md:p-2" />;
+          }
+          const dateStr = date.toISOString().split("T")[0];
+          const tasks = schedule?.scheduleData.filter((item: {
+            date: string;
+          }) => item.date === dateStr) || [];
+          const isToday = date.toDateString() === new Date().toDateString();
+          return <div key={i} className={`
+                relative
+                min-h-[40px] md:min-h-[100px] 
+                p-1 md:p-2 
+                rounded-lg
+                ${getTaskColor(date, tasks[0]?.completed)}
+                transition-all duration-300 
+                hover:bg-white/15
+                ${isToday ? "ring-1 ring-[#E040FB]" : ""}
+              `}>
+                <div className={`
+                  text-white font-medium 
+                  text-xs md:text-sm
+                  ${isToday ? "text-[#E040FB]" : ""}
+                `}>
                   {date.getDate()}
                 </div>
-                <div className="space-y-1">
-                  {tasks.map((task, j) => (
-                    <div
-                      key={j}
-                      className="text-[#E0B0FF] text-xs truncate"
-                      title={task.subject}
-                    >
-                      • {task.subject}
-                    </div>
-                  ))}
+                <div className="md:hidden">
+                  {tasks.length > 0 && <div className="mt-1 w-2 h-2 rounded-full bg-[#E040FB]" />}
                 </div>
-              </div>
-            );
-          })}
+                <div className="hidden md:block space-y-1 mt-1">
+                  {tasks.map((task: {
+                subject: string;
+              }, j: number) => <div key={j} className="text-[#E0B0FF] text-xs truncate" title={task.subject}>
+                        • {task.subject}
+                      </div>)}
+                </div>
+              </div>;
+        })}
         </div>
-      </div>
-    );
+      </div>;
   };
-  
   const getTaskColor = (date: Date, completed?: boolean) => {
     const status = getTaskStatus(date.toISOString().split("T")[0], completed);
     switch (status) {
@@ -241,11 +362,6 @@ export const SavedSchedulePage = () => {
   if (!schedule) return null;
   return <main className="min-h-screen w-full bg-[#2D0A54] px-4 py-8 md:px-8">
       <div className="max-w-6xl mx-auto">
-        {showOverlay && <div className="absolute inset-0 flex items-center z-100 justify-center animate-fade-in">
-            <p className="text-white text-2xl font-bold">🎉 Amazing! One step closer!</p>
-          </div>}
-        {showConfetti && <Confetti colors={["#E040FB", "#26A69A", "#FFFFFF"]} recycle={false} numberOfPieces={200} />}
-
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <h1 className="text-white text-3xl font-bold">{schedule.name}</h1>
           <ViewToggle currentView={currentView} onViewChange={handleViewChange} />
@@ -274,10 +390,9 @@ export const SavedSchedulePage = () => {
             <LiquidProgressBar progress={progress} />
           </div>
           <div className="bg-white/5 backdrop-blur-md rounded-xl p-6">
-          <ReportComponent scheduleData={schedule.scheduleData} />
+            <ReportComponent scheduleData={schedule.scheduleData} />
+          </div>
         </div>
-        </div>
-        
       </div>
     </main>;
 };
