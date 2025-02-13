@@ -4,7 +4,7 @@ import { HomePage } from "./components/HomePage";
 import { CalendarGenerator } from "./components/CalendarGenerator/CalendarGenerator";
 import { SavedSchedulePage } from "./components/SavedSchedule/SavedSchedulePage";
 import DataManagementPage from "./components/DataManagementPage";
-import { NotFoundPage } from "./components/NotfoundPage";
+import { NotFoundPage } from "./components/NotFoundPage";
 import { Navbar } from "./components/Navigation/Navbar";
 export function App() {
   return <Router>
