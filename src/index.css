@@ -75,3 +75,24 @@ a[role="button"],
 ::-webkit-scrollbar-thumb:hover {
   background: #E040FB;
 }
+
+@keyframes glitch-1 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+@keyframes glitch-2 {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(2px, -2px); }
+  40% { transform: translate(2px, 2px); }
+  60% { transform: translate(-2px, -2px); }
+  80% { transform: translate(-2px, 2px); }
+}
+.animate-glitch-1 {
+  animation: glitch-1 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+}
+.animate-glitch-2 {
+  animation: glitch-2 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
+}
